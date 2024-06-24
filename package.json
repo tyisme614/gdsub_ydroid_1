@@ -1,0 +1,25 @@
+{
+  "name": "gdsub_ydroid_1",
+  "version": "0.0.1",
+  "description": "video statistic fetcher",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tyisme614/gdsub_ydroid_1.git"
+  },
+  "keywords": [
+    "youtube",
+    "ydroid",
+    "gdsub",
+    "statistics"
+  ],
+  "author": "yuan",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tyisme614/gdsub_ydroid_1/issues"
+  },
+  "homepage": "https://github.com/tyisme614/gdsub_ydroid_1#readme"
+}
