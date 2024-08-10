@@ -21,5 +21,8 @@
   "bugs": {
     "url": "https://github.com/tyisme614/gdsub_ydroid_1/issues"
   },
-  "homepage": "https://github.com/tyisme614/gdsub_ydroid_1#readme"
+  "homepage": "https://github.com/tyisme614/gdsub_ydroid_1#readme",
+  "dependencies": {
+    "googleapis": "^140.0.1"
+  }
 }
