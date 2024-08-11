@@ -132,7 +132,9 @@ function retrieveVideoInfo(id){
      * publish_time : string
      * statistics : object
      * score : number
-     *
+     * rank_v : number
+     * rank_l : number
+     * rank_c : number
      * ****
      * statistics
      * **
@@ -174,10 +176,14 @@ function retrieveVideoInfo(id){
                         favorite_count : _favorite_count,
                         comment_count : _comment_count
                     },
-                    BASE_V : -1,
-                    BASE_C : -1,
-                    BASE_L : -1,
-                    score : -1
+                    BASE_V : 0,
+                    BASE_C : 0,
+                    BASE_L : 0,
+                    score : 0,
+                    rank_v : 0,
+                    rank_c : 0,
+                    rank_l : 0,
+                    rank_total : 0
 
                 }
                 videos.push(v);
@@ -206,6 +212,7 @@ function calculateStatistics(){
     for(let[key, value] of sorted_vc){
         let v = video_map.get(value);
         v.BASE_V = TOTAL_VIDEOS - rank;
+        v.rank_v = rank + 1;
         rank++;
         // console.log('Video:' + v.title + ' BASE_V=' + v.BASE_V);
         if(top_views.length < 3){
@@ -219,6 +226,7 @@ function calculateStatistics(){
     for(let[key, value] of sorted_lc){
         let v = video_map.get(value);
         v.BASE_L = TOTAL_VIDEOS - rank;
+        v.rank_l = rank + 1;
         rank++;
         if(top_likes.length < 3){
             top_likes.push(v);
@@ -232,6 +240,7 @@ function calculateStatistics(){
     for(let[key, value] of sorted_cc){
         let v = video_map.get(value);
         v.BASE_C = TOTAL_VIDEOS - rank;
+        v.rank_c = rank + 1;
         rank++;
         if(top_comments.length < 3){
             top_comments.push(v);
@@ -248,8 +257,11 @@ function calculateStatistics(){
     }
 
     let sorted_scores = new Map([...score_map.entries()].sort((a, b) => b[0] - a[0]));
+    rank = 0;
     for(let[key, value] of sorted_scores){
         let v = value;
+        v.rank_total = rank + 1;
+        rank++;
         if(top_videos.length < 3){
             top_videos.push(v);
         }
