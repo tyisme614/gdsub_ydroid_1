@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/tyisme614/gdsub_ydroid_1#readme",
   "dependencies": {
-    "googleapis": "^140.0.1"
+    "googleapis": "^140.0.1",
+    "redis": "^4.7.0"
   }
 }
