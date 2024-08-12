@@ -2,10 +2,12 @@ const { argv } = require('node:process');
 const channelWorker = require('./channelWorker');
 
 const AUTH_KEY = __dirname + '/auth_key.json';
-const CHECK_INTERVAL = 3600000; //24 hours
+const CHECK_INTERVAL = 43200000; //12 hours
 const redisClient = require('redis');
 
 let redis;
+let channel = argv[2];
+let channel_id = argv[3];
 // const CHANNEL_NETFLIX = 'UCWOA1ZGywLbqmigxE4Qlvuw';
 //const CHANNEL_DISNEY = 'UCuaFvcY4MhZY3U43mMt1dYQ';
 //const CHANNEL_HBO = 'UCVTQuK2CaWaTgSsoNkn5AiQ';
@@ -23,7 +25,15 @@ initializeRedis().then(r => {
                 // let worker = setInterval(doProcess, CHECK_INTERVAL );
                 break;
             case channelWorker.EVENT_CALCULATE_COMPLETE:
-                console.log(currentTimestamp() + '[workerMgr]' + '[' + argv[2] + '] analysis complete.');
+                console.log(currentTimestamp() + '[workerMgr]' + '[' + channel + '] analysis complete.');
+                redis.get(channel).then((report)=>{
+                    // console.log(report.toString());
+                    channelWorker.sendMail('yuant614@gmail.com, lu@gdsub.com',
+                        channel.toUpperCase() + '|Daily Report|GDSub_Team',
+                        report.toString(), null);
+
+                })
+                // console.log(report);
                 break;
         }
     });

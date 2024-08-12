@@ -4,12 +4,13 @@ const youtube = google.youtube('v3');
 //nodejs components
 const fs = require('fs');
 const EventEmitter = require('node:events');
+const nodemailer = require('nodemailer');
 
 //analysis parameters
 let TOTAL_VIDEOS = 32;
 let CHANNEL = '';
 let CHANNEL_ID = '';
-let TOP_COUNT = 10;
+let TOP_COUNT = 3;
 //events
 const EVENT_INITIALIZED = 1000;
 const EVENT_REQUEST_VIDEO_INFO = 1001;
@@ -163,6 +164,7 @@ function retrieveVideoInfo(id){
      * video object
      * **
      * video_id : string
+     * video_link : string
      * title : string
      * description : string
      * publish_time : string
@@ -194,6 +196,7 @@ function retrieveVideoInfo(id){
             if(res.data.items.length >= 1 ){
                 let item = res.data.items[0].snippet;
                 let _video_id = id;
+                let _video_link = 'https://www.youtube.com/watch?v=' + id;
                 let _title = item.title;
                 let _description = item.description;
                 let _publish_time = item.publishAt;
@@ -204,6 +207,7 @@ function retrieveVideoInfo(id){
                 let _comment_count = _statistics.commentCount;
                 let v = {
                     video_id : _video_id,
+                    video_link : _video_link,
                     title : _title,
                     description : _description,
                     publish_time : _publish_time,
@@ -360,9 +364,11 @@ function getVideoInfoText(v){
         + 'Video Title:' + v.title  + '\n'
         + 'Video ID:' + v.video_id  + '\n'
         + 'Video Score:' + v.score  + '\n'
-        + 'Views Count Rank:' + v.BASE_V  + '\n'
-        + 'Likes Count Rank:' + v.BASE_L  + '\n'
-        + 'Comments Count Rank:' + v.BASE_C  + '\n';
+        + 'Views Count Rank:' + v.rank_v  + '\n'
+        + 'Likes Count Rank:' + v.rank_l  + '\n'
+        + 'Comments Count Rank:' + v.rank_c  + '\n'
+        + 'Watch this trailer:' + v.video_link + '\n';
+
     return message;
 
 }
@@ -372,16 +378,44 @@ function displayVideoInfo(v){
         + 'Video Title:' + v.title  + '\n'
         + 'Video ID:' + v.video_id  + '\n'
         + 'Video Score:' + v.score  + '\n'
-        + 'Views Count Rank:' + v.BASE_V  + '\n'
-        + 'Likes Count Rank:' + v.BASE_L  + '\n'
-        + 'Comments Count Rank:' + v.BASE_C  + '\n';
+        + 'Views Count Rank:' + v.rank_v  + '\n'
+        + 'Likes Count Rank:' + v.rank_l  + '\n'
+        + 'Comments Count Rank:' + v.rank_c  + '\n';
 
     console.log(message);
 
 }
 
+function sendMail(receiver, subject, content, attachment){
+
+    // console.log('attachment-->' + attachment);
+    const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: 'ydroidt7@gmail.com',
+            pass: GMAIL_API_KEY
+        }
+    });
+
+    const mailOptions = {
+        from: 'ydroidt7@gmail.com',
+        to: receiver,
+        subject: subject,
+        text: content
+    };
+
+    transporter.sendMail(mailOptions, function(error, info){
+        if (error) {
+            console.log(error);
+        } else {
+            console.log('Email sent: ' + info.response);
+            // do something useful
+        }
+    });
+}
+
 //exports
-module.exports = {initialize, process, isAnalyzing, generateReport, getVideoInfoText,
+module.exports = {initialize, process, isAnalyzing, generateReport, getVideoInfoText, sendMail,
     EVENT_CALCULATE_COMPLETE, EVENT_INITIALIZED};
 
 

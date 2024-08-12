@@ -1,6 +1,6 @@
 {
   "name": "gdsub_ydroid_1",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "video statistic fetcher",
   "main": "app.js",
   "scripts": {
@@ -24,6 +24,7 @@
   "homepage": "https://github.com/tyisme614/gdsub_ydroid_1#readme",
   "dependencies": {
     "googleapis": "^140.0.1",
+    "nodemailer": "^6.9.14",
     "redis": "^4.7.0"
   }
 }
