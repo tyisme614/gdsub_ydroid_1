@@ -24,8 +24,8 @@ initializeRedis().then(r => {
     channelWorker.initialize(AUTH_KEY, redis, argv[2], argv[3], 10, (event) => {
         switch(event){
             case channelWorker.EVENT_INITIALIZED:
-                doProcess();
-                // let worker = setInterval(doProcess, CHECK_INTERVAL );
+                // doProcess();
+                let worker = setInterval(doProcess, CHECK_INTERVAL );
                 break;
             case channelWorker.EVENT_CALCULATE_COMPLETE:
                 console.log(currentTimestamp() + '[workerMgr]' + '[' + channel + '] analysis complete.');
