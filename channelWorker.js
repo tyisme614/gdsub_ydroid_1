@@ -456,6 +456,7 @@ function calculateStatistics(){
     for(let[key, value] of video_map){
         let v = value;
         v.score = 0.2 * v.BASE_V + 0.5 * v.BASE_C + 0.3 * v.BASE_L;
+        v.score = v.score.toFixed(2);//set 2 decimal places for float number
         score_map.set(v.score, v);
         // displayVideoInfo(v);
     }
