@@ -7,7 +7,7 @@ const EventEmitter = require('node:events');
 const nodemailer = require('nodemailer');
 
 //analysis parameters
-let TOTAL_VIDEOS = 32;
+let TOTAL_VIDEOS = 10;
 let CHANNEL = '';
 let CHANNEL_ID = '';
 let TOP_COUNT = 3;
@@ -21,6 +21,9 @@ const EVENT_CACHE_DATA_IN_REDIS = 1004;
 const REDIS_KEY_TOP_VIEWS_LIST = 'top.views.list';
 const REDIS_KEY_TOP_LIKES_LIST = 'top.likes.list';
 const REDIS_KEY_TOP_COMMENTS_LIST = 'top.comments.list';
+const REDIS_KEY_TOP_GROWTH_VIEW_LIST = 'top.growth.view.list';
+const REDIS_KEY_TOP_GROWTH_LIKE_LIST = 'top.growth.like.list';
+const REDIS_KEY_TOP_GROWTH_COMMENT_LIST = 'top.growth.comment.list';
 const REDIS_KEY_TOP_VIDEOS_LIST = 'top.videos.list';
 
 const handler = new EventEmitter();
@@ -30,8 +33,8 @@ let auth_key = __dirname + '/auth_key.json';
 let YOUTUBE_API_KEY, GMAIL_API_KEY;
 let videos = [];
 let video_map;
-let view_map, like_map, favorite_map, comment_map, score_map;
-let top_videos, top_views, top_likes, top_comments;
+let view_map, like_map, favorite_map, comment_map, score_map, growth_view_map, growth_like_map, growth_comment_map;
+let top_videos, top_views, top_likes, top_comments, top_growth_view, top_growth_like, top_growth_comment;
 let callback = null;
 let redis = null;
 /**
@@ -41,17 +44,7 @@ let redis = null;
  *
  */
 handler.on(EVENT_INITIALIZED, ()=>{
-    videos = [];
-    video_map = new Map();
-    view_map = new Map();
-    like_map = new Map();
-    favorite_map = new Map();
-    comment_map = new Map();
-    score_map = new Map();
-    top_videos = [];
-    top_views = [];
-    top_likes = [];
-    top_comments = [];
+    cleanCache();
     if(callback != null){
         callback(EVENT_INITIALIZED);
     }
@@ -95,6 +88,7 @@ handler.on(EVENT_CACHE_DATA_IN_REDIS, (key, value) => {
  */
 function process(){
     analyzing = true;
+    cleanCache();
     retrieveVideoList(CHANNEL_ID, 'Official Trailer', TOTAL_VIDEOS);
 
 }
@@ -120,6 +114,26 @@ function initialize(_auth, _redis, _channel, _channel_id, _total, _callback){
 
     });
 
+}
+
+function cleanCache(){
+    videos = [];
+    video_map = new Map();
+    view_map = new Map();
+    like_map = new Map();
+    favorite_map = new Map();
+    comment_map = new Map();
+    score_map = new Map();
+    growth_view_map = new Map();
+    growth_like_map = new Map();
+    growth_comment_map = new Map();
+    top_videos = [];
+    top_views = [];
+    top_likes = [];
+    top_comments = [];
+    top_growth_view = [];
+    top_growth_like = [];
+    top_growth_comment = [];
 }
 /**
  *
@@ -151,14 +165,17 @@ function retrieveVideoList(channel_id, keyword, maxRes){
             for(let i=0; i<items.length; i++){
                 let item = items[i];
                 let _video_id = item.id.videoId;
-                retrieveVideoInfo(_video_id);
+                redis.get(_video_id).then((v_json) => {
+                    let v = v_json == null? null : JSON.parse(v_json);
+                    retrieveVideoInfo(_video_id, v);
+                })
             }
 
         }
     });
 }
 
-function retrieveVideoInfo(id){
+function retrieveVideoInfo(id, _video){
     /**
      * ****
      * video object
@@ -171,9 +188,16 @@ function retrieveVideoInfo(id){
      * update_time : string
      * statistics : object
      * score : number
+     * BASE_V : number
+     * BASE_C : number
+     * BASE_L : number
      * rank_v : number
      * rank_l : number
      * rank_c : number
+     * view_growth : number
+     * like_growth : number
+     * comment_growth : number
+     *
      * ****
      * statistics
      * **
@@ -199,7 +223,7 @@ function retrieveVideoInfo(id){
                 let _video_link = 'https://www.youtube.com/watch?v=' + id;
                 let _title = item.title;
                 let _description = item.description;
-                let _publish_time = item.publishAt;
+                let _publish_time = item.publishedAt;
                 let _statistics = res.data.items[0].statistics;
                 let _view_count = _statistics.viewCount;
                 let _like_count = _statistics.likeCount;
@@ -225,15 +249,69 @@ function retrieveVideoInfo(id){
                     rank_v : 0,
                     rank_c : 0,
                     rank_l : 0,
-                    rank_total : 0
-
+                    rank_total : 0,
+                    view_growth : 0,
+                    like_growth : 0,
+                    comment_growth : 0
                 }
+                if(_video != null ){
+                    v.view_growth = v.statistics.view_count - _video.statistics.view_count;
+                    v.like_growth = v.statistics.like_count - _video.statistics.like_count;
+                    v.comment_growth = v.statistics.comment_count - _video.statistics.comment_count;
+                }
+
                 videos.push(v);
+
                 video_map.set(_video_id, v);
-                view_map.set(_view_count, _video_id);
-                like_map.set(_like_count, _video_id);
-                favorite_map.set(_favorite_count, _video_id);
-                comment_map.set(_comment_count, _video_id);
+
+                if(video_map.has(_view_count)){
+                    //videos with same views
+                    let arr = video_map.get(_view_count);
+                    arr.push(_video_id);
+                }else {
+                    view_map.set(_view_count, [_video_id]);
+                }
+
+                if(like_map.has(_like_count)){
+                    //videos with same likes
+                    let arr = like_map.get(_like_count);
+                    arr.push(_video_id);
+                }else {
+                    like_map.set(_like_count, [_video_id]);
+                }
+
+                if(comment_map.has(_comment_count)){
+                    //videos with same comments
+                    let arr = comment_map.get(_comment_count);
+                    arr.push(_video_id);
+                }else {
+                    comment_map.set(_comment_count, [_video_id]);
+                }
+
+                if(growth_view_map.has(v.view_growth)){
+                    //videos with same growth in views
+                    let arr = growth_view_map.get(v.view_growth);
+                    arr.push(_video_id);
+                }else {
+                    growth_view_map.set(v.view_growth, [_video_id]);
+                }
+
+                if(growth_like_map.has(v.like_growth)){
+                    //videos with same growth in likes
+                    let arr = growth_like_map.get(v.like_growth);
+                    arr.push(_video_id);
+                }else {
+                    growth_like_map.set(v.like_growth, [_video_id]);
+                }
+
+                if(growth_comment_map.has(v.comment_growth)){
+                    //videos with same growth in views
+                    let arr = growth_comment_map.get(v.comment_growth);
+                    arr.push(_video_id);
+                }else {
+                    growth_comment_map.set(v.comment_growth, [_video_id]);
+                }
+
                 if(videos.length >= TOTAL_VIDEOS){
                     handler.emit(EVENT_RANK_VIDEOS);
                 }
@@ -249,56 +327,132 @@ function retrieveVideoInfo(id){
 
 
 function calculateStatistics(){
+    /**
+     * calculate top viewed videos
+     */
     let sorted_vc = new Map([...view_map.entries()].sort((a, b) => b[0] - a[0]));
     let rank = 0;
     // console.log('\nView Count Rank' + '\n');
     for(let[key, value] of sorted_vc){
-        let v = video_map.get(value);
-        v.BASE_V = TOTAL_VIDEOS - rank;
-        v.rank_v = rank + 1;
-        rank++;
-        // console.log('Video:' + v.title + ' BASE_V=' + v.BASE_V);
-        if(top_views.length < TOP_COUNT){
-            top_views.push(v);
+
+        for(let i=0;i<value.length; i++){
+            let v = video_map.get(value[i]);
+            v.BASE_V = TOTAL_VIDEOS - rank;
+            v.rank_v = rank + 1;
+            rank++;
+            // console.log('Video:' + v.title + ' BASE_V=' + v.BASE_V);
+            if(top_views.length < TOP_COUNT){
+                top_views.push(v);
+            }
         }
     }
 
     //cache top views list
-    handler.emit(EVENT_CACHE_DATA_IN_REDIS, REDIS_KEY_TOP_VIEWS_LIST, JSON.stringify(top_views));
+    handler.emit(EVENT_CACHE_DATA_IN_REDIS, CHANNEL + '.' + REDIS_KEY_TOP_VIEWS_LIST, JSON.stringify(top_views));
 
+    /**
+     * calculate top liked videos
+     */
     let sorted_lc = new Map([...like_map.entries()].sort((a, b) => b[0] - a[0]));
     rank = 0;
     // console.log('\nLike Count Rank' + '\n');
     for(let[key, value] of sorted_lc){
-        let v = video_map.get(value);
-        v.BASE_L = TOTAL_VIDEOS - rank;
-        v.rank_l = rank + 1;
-        rank++;
-        if(top_likes.length < TOP_COUNT){
-            top_likes.push(v);
+
+        for(let i=0;i<value.length; i++){
+            let v = video_map.get(value[i]);
+            v.BASE_L = TOTAL_VIDEOS - rank;
+            v.rank_l = rank + 1;
+            rank++;
+            if(top_likes.length < TOP_COUNT){
+                top_likes.push(v);
+            }
         }
         // console.log('Video:' + v.title + ' BASE_L=' + v.BASE_L);
     }
-    //cache top likes list
-    handler.emit(EVENT_CACHE_DATA_IN_REDIS, REDIS_KEY_TOP_LIKES_LIST, JSON.stringify(top_likes));
+    //cache top likes list, key: channel.top.likes.list
+    handler.emit(EVENT_CACHE_DATA_IN_REDIS, CHANNEL + '.' + REDIS_KEY_TOP_LIKES_LIST, JSON.stringify(top_likes));
 
+    /**
+     * calculate top commented videos
+     */
     let sorted_cc = new Map([...comment_map.entries()].sort((a, b) => b[0] - a[0]));
     rank = 0;
     // console.log('\nComment Count Rank' + '\n');
     for(let[key, value] of sorted_cc){
-        let v = video_map.get(value);
-        v.BASE_C = TOTAL_VIDEOS - rank;
-        v.rank_c = rank + 1;
-        rank++;
-        if(top_comments.length < TOP_COUNT){
-            top_comments.push(v);
+        for(let i=0;i<value.length; i++){
+            let v = video_map.get(value[i]);
+            v.BASE_C = TOTAL_VIDEOS - rank;
+            v.rank_c = rank + 1;
+            rank++;
+            if(top_comments.length < TOP_COUNT){
+                top_comments.push(v);
+            }
         }
-
         // console.log('Video:' + v.title + ' BASE_C=' + v.BASE_C);
     }
     //cache top comments list
-    handler.emit(EVENT_CACHE_DATA_IN_REDIS, REDIS_KEY_TOP_COMMENTS_LIST, JSON.stringify(top_comments));
+    handler.emit(EVENT_CACHE_DATA_IN_REDIS, CHANNEL + '.' + REDIS_KEY_TOP_COMMENTS_LIST, JSON.stringify(top_comments));
 
+    /**
+     *
+     * calculate top videos with highest growth rate in views
+     */
+    let sorted_growth_view = new Map([...growth_view_map.entries()].sort((a, b) => b[0] - a[0]));
+    // console.log('\nComment Count Rank' + '\n');
+    for(let[key, value] of sorted_growth_view){
+        for(let i=0;i<value.length; i++){
+            let v = video_map.get(value[i]);
+
+            if(top_growth_view.length < TOP_COUNT){
+                top_growth_view.push(v);
+            }
+        }
+
+    }
+    //cache top growth of comment list
+    handler.emit(EVENT_CACHE_DATA_IN_REDIS, CHANNEL + '.' + REDIS_KEY_TOP_GROWTH_VIEW_LIST, JSON.stringify(top_growth_view));
+
+    /**
+     *
+     * calculate top videos with highest growth rate in views
+     */
+    let sorted_growth_like = new Map([...growth_like_map.entries()].sort((a, b) => b[0] - a[0]));
+    // console.log('\nComment Count Rank' + '\n');
+    for(let[key, value] of sorted_growth_like){
+        for(let i=0;i<value.length; i++){
+            let v = video_map.get(value[i]);
+
+            if(top_growth_like.length < TOP_COUNT){
+                top_growth_like.push(v);
+            }
+        }
+
+    }
+    //cache top growth of comment list
+    handler.emit(EVENT_CACHE_DATA_IN_REDIS, CHANNEL + '.' + REDIS_KEY_TOP_GROWTH_LIKE_LIST, JSON.stringify(top_growth_like));
+
+    /**
+     *
+     * calculate top videos with highest growth rate in views
+     */
+    let sorted_growth_comment = new Map([...growth_comment_map.entries()].sort((a, b) => b[0] - a[0]));
+    // console.log('\nComment Count Rank' + '\n');
+    for(let[key, value] of sorted_growth_comment){
+        for(let i=0;i<value.length; i++){
+            let v = video_map.get(value[i]);
+
+            if(top_growth_comment.length < TOP_COUNT){
+                top_growth_comment.push(v);
+            }
+        }
+
+    }
+    //cache top growth of comment list
+    handler.emit(EVENT_CACHE_DATA_IN_REDIS, CHANNEL + '.' + REDIS_KEY_TOP_GROWTH_COMMENT_LIST, JSON.stringify(top_growth_comment));
+
+    /**
+     * calculate top videos
+     */
     for(let[key, value] of video_map){
         let v = value;
         v.score = 0.2 * v.BASE_V + 0.5 * v.BASE_C + 0.3 * v.BASE_L;
@@ -319,7 +473,7 @@ function calculateStatistics(){
         // console.log('Video:' + v.title + ' BASE_C=' + v.BASE_C);
     }
     //cache top videos list
-    handler.emit(EVENT_CACHE_DATA_IN_REDIS, REDIS_KEY_TOP_VIDEOS_LIST, JSON.stringify(top_videos));
+    handler.emit(EVENT_CACHE_DATA_IN_REDIS, CHANNEL + '.' + REDIS_KEY_TOP_VIDEOS_LIST, JSON.stringify(top_videos));
 
     handler.emit(EVENT_CALCULATE_COMPLETE);
 
@@ -335,10 +489,25 @@ function generateReport(){
 
     }
 
+    report += '\n[Top Growth in Views]' + '\n'
+
+    for(let i=0; i<top_growth_view.length; i++){
+        let v = top_growth_view[i];
+        report += 'No.' + (i+1) + ' Video:' + v.title + '\nView Growth -->' + v.view_growth + '\n';
+
+    }
+
     report += '\n[Top Likes]' + '\n';
     for(let i=0; i<top_likes.length; i++){
         let v = top_likes[i];
         report += 'No.' + (i+1) + ' Video:' + v.title + '\nTotal Likes -->' + v.statistics.like_count + '\n';
+
+    }
+
+    report += '\n[Top Growth in Likes]' + '\n';
+    for(let i=0; i<top_growth_like.length; i++){
+        let v = top_growth_like[i];
+        report += 'No.' + (i+1) + ' Video:' + v.title + '\nLike Growth -->' + v.like_growth + '\n';
 
     }
 
@@ -347,6 +516,13 @@ function generateReport(){
         let v = top_comments[i];
         report += 'No.' + (i+1) + ' Video:'  + v.title + '\nTotal Comments -->' + v.statistics.comment_count + '\n';
     }
+
+    report += '\n[Top Growth in Comments]' + '\n';
+    for(let i=0; i<top_growth_comment.length; i++){
+        let v = top_growth_comment[i];
+        report += 'No.' + (i+1) + ' Video:'  + v.title + '\nComment Growth-->' + v.comment_growth + '\n';
+    }
+
 
     report += '\n[Video Rank]' + '\n';
 
@@ -364,6 +540,7 @@ function getVideoInfoText(v){
         + 'Video Title:' + v.title  + '\n'
         + 'Video ID:' + v.video_id  + '\n'
         + 'Video Score:' + v.score  + '\n'
+        + 'Publish Time:' + v.publish_time + '\n'
         + 'Views Count Rank:' + v.rank_v  + '\n'
         + 'Likes Count Rank:' + v.rank_l  + '\n'
         + 'Comments Count Rank:' + v.rank_c  + '\n'

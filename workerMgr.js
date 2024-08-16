@@ -8,17 +8,20 @@ const redisClient = require('redis');
 let redis;
 let channel = argv[2];
 let channel_id = argv[3];
-// const CHANNEL_NETFLIX = 'UCWOA1ZGywLbqmigxE4Qlvuw';
-//const CHANNEL_DISNEY = 'UCuaFvcY4MhZY3U43mMt1dYQ';
-//const CHANNEL_HBO = 'UCVTQuK2CaWaTgSsoNkn5AiQ';
-//const CHANNEL_UNIVERSAL = 'UCq0OueAsdxH6b8nyAspwViw';
-
+const CHANNEL_NETFLIX = 'UCWOA1ZGywLbqmigxE4Qlvuw'; //'netflix'
+const CHANNEL_DISNEY = 'UCuaFvcY4MhZY3U43mMt1dYQ'; //'disney'
+const CHANNEL_HBO = 'UCVTQuK2CaWaTgSsoNkn5AiQ'; //'hbo'
+const CHANNEL_UNIVERSAL = 'UCq0OueAsdxH6b8nyAspwViw';  //'universal'
+const CHANNEL_SONY = 'UCz97F7dMxBNOfGYu3rx8aCw';  //'sony'
+const CHANNEL_KINOCHECK = 'UCLRlryMfL8ffxzrtqv0_k_w'; //'kinocheck'
+const CHANNEL_APPLE_TV = 'UC1Myj674wRVXB9I4c6Hm5zA'; //'appletv'
+const CHANNEL_TRAILER_SPOT = 'UCiCSDcAcGDvD_v0TQQ8nxJg'; //'trailerspot'
 initializeRedis().then(r => {
     redis = r;
 
     //!!!NOTE: specify target channel in argv[2], candidates: netflix, disney, hbo, universal
     //this is also used as report key in redis
-    channelWorker.initialize(AUTH_KEY, redis, argv[2], argv[3], 32, (event) => {
+    channelWorker.initialize(AUTH_KEY, redis, argv[2], argv[3], 10, (event) => {
         switch(event){
             case channelWorker.EVENT_INITIALIZED:
                 doProcess();
@@ -28,7 +31,7 @@ initializeRedis().then(r => {
                 console.log(currentTimestamp() + '[workerMgr]' + '[' + channel + '] analysis complete.');
                 redis.get(channel).then((report)=>{
                     // console.log(report.toString());
-                    channelWorker.sendMail('yuant614@gmail.com, lu@gdsub.com',
+                    channelWorker.sendMail('yuan@gdsub.com',
                         channel.toUpperCase() + '|Daily Report|GDSub_Team',
                         report.toString(), null);
 
