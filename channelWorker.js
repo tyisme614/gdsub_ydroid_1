@@ -56,8 +56,13 @@ handler.on(EVENT_RANK_VIDEOS, ()=>{
 
 handler.on(EVENT_CALCULATE_COMPLETE, ()=>{
     analyzing = false;
-    let report = generateReport();
-    handler.emit(EVENT_CACHE_DATA_IN_REDIS, CHANNEL, report);
+    let _report = generateReport();
+    let _timestamp = Date().now();
+    let cache_data = {
+        timestamp: _timestamp,
+        report: _report
+    }
+    handler.emit(EVENT_CACHE_DATA_IN_REDIS, CHANNEL, JSON.stringify(cache_data));
     // generateReport();
     if(callback != null){
         callback(EVENT_CALCULATE_COMPLETE);
