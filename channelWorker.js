@@ -25,6 +25,7 @@ const REDIS_KEY_TOP_GROWTH_VIEW_LIST = 'top.growth.view.list';
 const REDIS_KEY_TOP_GROWTH_LIKE_LIST = 'top.growth.like.list';
 const REDIS_KEY_TOP_GROWTH_COMMENT_LIST = 'top.growth.comment.list';
 const REDIS_KEY_TOP_VIDEOS_LIST = 'top.videos.list';
+const REDIS_KEY_PREFIX_VIDEO = 'video.';
 
 const handler = new EventEmitter();
 //local variables
@@ -470,7 +471,7 @@ function calculateStatistics(){
         if(top_videos.length < TOP_COUNT){
             top_videos.push(v);
         }
-        handler.emit(EVENT_CACHE_DATA_IN_REDIS, v.video_id, JSON.stringify(v));
+        handler.emit(EVENT_CACHE_DATA_IN_REDIS, REDIS_KEY_PREFIX_VIDEO + v.video_id, JSON.stringify(v));
         // console.log('Video:' + v.title + ' BASE_C=' + v.BASE_C);
     }
     //cache top videos list
