@@ -57,7 +57,7 @@ handler.on(EVENT_RANK_VIDEOS, ()=>{
 handler.on(EVENT_CALCULATE_COMPLETE, ()=>{
     analyzing = false;
     let _report = generateReport();
-    let _timestamp = Date().now();
+    let _timestamp = Date.now();
     let cache_data = {
         timestamp: _timestamp,
         report: _report
