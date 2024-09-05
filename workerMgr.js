@@ -29,11 +29,14 @@ initializeRedis().then(r => {
                 break;
             case channelWorker.EVENT_CALCULATE_COMPLETE:
                 console.log(currentTimestamp() + '[workerMgr]' + '[' + channel + '] analysis complete.');
-                redis.get(channel).then((report)=>{
+                redis.get(channel).then((data)=>{
+                    let json = JSON.parse(data);
+                    let report = json.report;
+                    let content = 'Report Time:' + currentTimestamp() + '\n' + report.toString();
                     // console.log(report.toString());
-                    channelWorker.sendMail('yuan@gdsub.com',
+                    channelWorker.sendMail('yuan@gdsub.com, yuant614@gmail.com',
                         channel.toUpperCase() + '|Daily Report|GDSub_Team',
-                        report.toString(), null);
+                        content, null);
 
                 })
                 // console.log(report);

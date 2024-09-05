@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="02a259cd-e55c-4a5b-9d64-46fcb2d1b64b" name="gdsub_tool_server">
+        <fileTransfer rootFolder="/home/yuan/workspace/gdsub_ydroid_1" accessType="SFTP" host="188.165.205.201.ipssh.net" port="1822" sshConfigId="f56ea253-80b7-4c53-9eb7-8687e5cd19fc" sshConfig="yuan@188.165.205.201.ipssh.net:1822 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
