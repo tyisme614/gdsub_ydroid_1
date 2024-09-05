@@ -32,7 +32,7 @@ initializeRedis().then(r => {
                 redis.get(channel).then((data)=>{
                     let json = JSON.parse(data);
                     let report = json.report;
-                    let content = 'Report Time:' + currentTimestamp() + '\n' + report.toString();
+                    let content = 'Report Time:' + currentTimestamp() + '\n' + JSON.stringify(report);
                     // console.log(report.toString());
                     channelWorker.sendMail('yuan@gdsub.com, yuant614@gmail.com',
                         channel.toUpperCase() + '|Daily Report|GDSub_Team',

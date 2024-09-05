@@ -487,58 +487,136 @@ function calculateStatistics(){
 }
 
 function generateReport(){
-    let report = '';
-    report += '\n[Top Views]' + '\n'
+
+    let _top_view_rank = {
+        title: '[Top Views]',
+        list: []
+    }
+
 
     for(let i=0; i<top_views.length; i++){
         let v = top_views[i];
-        report += 'No.' + (i+1) + ' Video:' + v.title + '\nTotal Views -->' + v.statistics.view_count + '\n';
+        let item = {
+            rank: i+1,
+            title: v.title,
+            id: v.video_id,
+            total_views: v.statistics.view_count
+        }
+        _top_view_rank.list.push(item);
 
     }
 
-    report += '\n[Top Growth in Views]' + '\n'
+    let _top_view_growth_rank = {
+        title: '[Top Growth in Views]',
+        list: []
+    }
 
     for(let i=0; i<top_growth_view.length; i++){
         let v = top_growth_view[i];
-        report += 'No.' + (i+1) + ' Video:' + v.title + '\nView Growth -->' + v.view_growth + '\n';
+        let item = {
+            rank: i+1,
+            title: v.title,
+            id: v.video_id,
+            view_growth: v.view_growth
+        }
+        _top_view_growth_rank.list.push(item);
 
     }
 
-    report += '\n[Top Likes]' + '\n';
+    let _top_like_rank = {
+        title: '[Top Likes]',
+        list: []
+    }
+
     for(let i=0; i<top_likes.length; i++){
         let v = top_likes[i];
-        report += 'No.' + (i+1) + ' Video:' + v.title + '\nTotal Likes -->' + v.statistics.like_count + '\n';
+        let item = {
+            rank: i+1,
+            title: v.title,
+            id: v.video_id,
+            like_count: v.statistics.like_count
+        }
+        _top_like_rank.list.push(item);
 
     }
 
-    report += '\n[Top Growth in Likes]' + '\n';
+    let _top_like_growth_rank = {
+        title: '[Top Growth in Likes]',
+        list: []
+    }
+
     for(let i=0; i<top_growth_like.length; i++){
         let v = top_growth_like[i];
-        report += 'No.' + (i+1) + ' Video:' + v.title + '\nLike Growth -->' + v.like_growth + '\n';
+        let item = {
+            rank: i+1,
+            title: v.title,
+            id: v.video_id,
+            like_growth: v.like_growth
+        }
+        _top_like_growth_rank.list.push(item);
 
     }
 
-    report += '\n[Top Comments]' + '\n';
+    let _top_comment_rank = {
+        title: '[Top Comments]',
+        list: []
+    }
+
     for(let i=0; i<top_comments.length; i++){
         let v = top_comments[i];
-        report += 'No.' + (i+1) + ' Video:'  + v.title + '\nTotal Comments -->' + v.statistics.comment_count + '\n';
+        let item = {
+            rank: i+1,
+            title: v.title,
+            id: v.video_id,
+            comment_count: v.statistics.comment_count
+        }
+        _top_comment_rank.list.push(item);
+
     }
 
-    report += '\n[Top Growth in Comments]' + '\n';
+    let _top_comment_growth_rank = {
+        title: '[Top Growth in Comments]',
+        list: []
+    }
+
     for(let i=0; i<top_growth_comment.length; i++){
         let v = top_growth_comment[i];
-        report += 'No.' + (i+1) + ' Video:'  + v.title + '\nComment Growth-->' + v.comment_growth + '\n';
+        let item = {
+            rank: i+1,
+            title: v.title,
+            id: v.video_id,
+            comment_growth: v.comment_growth
+        }
+        _top_comment_growth_rank.list.push(item);
+
     }
 
-
-    report += '\n[Video Rank]' + '\n';
+    let _video_rank = {
+        title: '[Video Rank]',
+        list: []
+    }
 
     for(let i=0; i<top_videos.length; i++){
         let v = top_videos[i];
-        report += 'No.' + (i+1) + ' Video:' + v.title + '\nTotal Score -->' + v.score + '\n';
-        report += getVideoInfoText(v) + '\n';
+        let item = {
+            rank: i+1,
+            title: v.title,
+            id: v.video_id,
+            score: v.score
+        }
+        _video_rank.list.push(item);
     }
 
+    let report = {
+        top_view_rank: _top_view_rank,
+        top_view_growth_rank: _top_view_growth_rank,
+        top_like_rank: _top_like_rank,
+        top_like_growth_rank: _top_like_growth_rank,
+        top_comment_rank: _top_comment_rank,
+        top_comment_growth_rank: _top_comment_growth_rank,
+        video_rank: _video_rank
+
+    };
     return report;
 }
 
